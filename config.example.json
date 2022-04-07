@@ -1,0 +1,10 @@
+{
+    "db_server": "127.0.0.1:27017",
+    "db_name": "database",
+    "db_user": "username",
+    "db_pass": "123456",
+    "cookie": "",
+    "bot_token": "123456:Abcdefghijklmn",
+    "bot": "@xxxx_bot",
+    "admin": []
+}
