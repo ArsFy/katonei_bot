@@ -28,8 +28,8 @@ bot.on('message', async (msg) => {
                 "message_id": mid
             })
         } else {
-            if (time[even.chat.id] == undefined ? 0 : time[even.chat.id] < new Date() - 5000) {
-                time[even.chat.id] = new Date() / 1
+            if ((time[chatId] == undefined ? 0 : time[chatId]) < (new Date() - 5000)) {
+                time[chatId] = new Date() / 1
                 try {
                     let msginfo = await bot.sendPhoto(chatId, fs.readFileSync(`./photos/${file}`), {
                         caption: msg,
@@ -181,8 +181,8 @@ bot.on("callback_query", async (even) => {
                 "message_id": mid
             })
         } else {
-            if (time[even.chat.id] == undefined ? 0 : time[even.chat.id] < new Date() - 5000) {
-                time[even.chat.id] = new Date() / 1
+            if ((time[chatId] == undefined ? 0 : time[chatId]) < (new Date() - 5000)) {
+                time[chatId] = new Date() / 1
                 try {
                     let msginfo = await bot.sendPhoto(chatId, fs.readFileSync(`./photos/${file}`), {
                         caption: msg,
@@ -204,6 +204,7 @@ bot.on("callback_query", async (even) => {
 
     switch (even.data) {
         case "get":
+            bot.answerCallbackQuery(even.id, { "text": "好！" });
             MongoPool.getInstance(async (client) => {
                 let db = client.db(config.db_name)
                 db.collection(config.db_name).aggregate([{ $sample: { size: 1 } }]).toArray((err, result) => {
