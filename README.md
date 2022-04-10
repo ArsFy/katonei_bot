@@ -2,13 +2,13 @@
 
 Telegram 隨機色圖 Bot（也可以不色）
 
-`/start` 關於 Bot
-`/hentai` 隨機色圖
-`/addpixiv PixivId` 從Pixiv添加圖片
-`/addphoto` 從Telegram添加圖片
-`/status` Bot狀態
-`/addadmin` 添加管理員（回復訊息）
-`/deladmin` 刪除管理員（回復訊息）
+- `/start` 關於 Bot
+- `/hentai` 隨機色圖
+- `/addpixiv PixivId` 從Pixiv添加圖片
+- `/addphoto` 從Telegram添加圖片
+- `/status` Bot狀態
+- `/addadmin` 添加管理員（回復訊息）
+- `/deladmin` 刪除管理員（回復訊息）
 
 -----
 
