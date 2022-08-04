@@ -5,7 +5,7 @@ Telegram 隨機色圖 Bot（也可以不色）
 - `/start` 關於 Bot
 - `/hentai` 隨機色圖
 - `/addpixiv PixivId` 從Pixiv添加圖片
-- `/addpixiv PixivId1 PixivId2 PixivId3 ...` 從Pixiv添加多個圖片
+- `/addpixivlist PixivId1 PixivId2 PixivId3 ...` 從Pixiv添加多個圖片
 - `/addphoto` 從Telegram添加圖片
 - `/getphoto filename` 獲取圖片檔案
 - `/status` Bot狀態
