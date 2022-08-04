@@ -1,4 +1,6 @@
 {
+    "api_server": false,
+    "api_port": 80,
     "db_server": "127.0.0.1:27017",
     "db_name": "database",
     "db_user": "username",
