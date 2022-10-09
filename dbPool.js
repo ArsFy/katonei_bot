@@ -1,6 +1,6 @@
 const config = require('./config.json');
 const MongoClient = require('mongodb').MongoClient;
-const url = `mongodb://${config.db_user}:${config.db_pass}@${config.db_server}/${config.db_name}`
+const url = `mongodb://${(config.db_user != "" && config.db_pass != "") ? `${config.db_user}:${config.db_pass}@` : ""}${config.db_server}/${config.db_name}`
 
 const option = {
     connectTimeoutMS: 1000,
