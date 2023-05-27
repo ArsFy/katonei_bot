@@ -75,17 +75,36 @@ bot.on('message', async (msg) => {
             if ((time[chatId] == undefined ? 0 : time[chatId]) < (new Date() - 5000)) {
                 time[chatId] = new Date() / 1
                 try {
-                    let msginfo = await bot.sendPhoto(chatId, fs.readFileSync(`./photos/${file}`), {
-                        caption: msg,
-                        "reply_markup": {
-                            "inline_keyboard": s ? [
-                                [{ "text": "我還要！", "callback_data": "get" }]
-                            ] : []
-                        }
-                    })
-                    return msginfo.message_id
+                    if (typeof file == "string" || file.length == 1) {
+                        if (!typeof file == "string") file = file[0];
+                        let msginfo = await bot.sendPhoto(chatId, fs.readFileSync(`./photos/${file}`), {
+                            caption: msg,
+                            "reply_markup": {
+                                "inline_keyboard": s ? [
+                                    [{ "text": "我還要！", "callback_data": "get" }]
+                                ] : []
+                            }
+                        })
+                        return msginfo.message_id
+                    } else {
+                        let imagelist = [];
+                        for (let i = 0; i < file.length; i++) imagelist.push({
+                            type: 'photo',
+                            media: fs.readFileSync(`./photos/${file[i]}`),
+                            ...(i == 0 ? {
+                                caption: msg,
+                                "reply_markup": {
+                                    "inline_keyboard": s ? [
+                                        [{ "text": "我還要！", "callback_data": "get" }]
+                                    ] : []
+                                }
+                            } : {})
+                        })
+                        bot.sendMediaGroup(chatId, imagelist);
+                    }
                 } catch (err) {
-                    bot.sendMessage(chatId, "沒有這個檔案: " + file)
+                    console.log("ReadErr:", err)
+                    bot.sendMessage(chatId, "讀圖片失敗，請重試")
                 }
             } else {
                 bot.sendMessage(chatId, "太快啦...等待幾秒後再試吧！")
@@ -96,10 +115,10 @@ bot.on('message', async (msg) => {
     let username = msg.from.username != undefined ? msg.from.username : msg.from.id
 
     switch (msgInfo[0]) {
-        case "/hentai": case `/hentai${config.bot}`: case "/sex": case `/sex${config.bot}`:
+        case "/hentai": case `/hentai${config.bot}`:
             MongoPool.getInstance(async (client) => {
                 let db = client.db(config.db_name)
-                db.collection(config.db_name).aggregate([{ $sample: { size: 1 } }]).toArray((err, result) => {
+                if (msgInfo.length == 1) db.collection(config.db_name).aggregate([{ $sample: { size: 1 } }]).toArray((err, result) => {
                     if (result.length != 0) {
                         switch (result[0].type) {
                             case "pixiv":
@@ -110,7 +129,20 @@ bot.on('message', async (msg) => {
                                 break
                         }
                     } else {
-                        bot.sendMessage(chatId, "無內容，可以使用下面的方法加到數據庫：\n")
+                        bot.sendMessage(chatId, "無內容，請先添加圖片")
+                    }
+                }); else db.collection(config.db_name).aggregate([{ $match: { taglist: msgInfo[1] } }, { $sample: { size: 1 } }]).toArray((err, result) => {
+                    if (result.length != 0) {
+                        switch (result[0].type) {
+                            case "pixiv":
+                                sendPic(result[0].file, `@${username} 作品名: ${result[0].name}\n作者: ${result[0].author}\nTag: #${result[0].taglist.join(" #")}\nPixivID: ${result[0].id}\nURL: https://pixiv.net/i/${result[0].id}`, undefined, true);
+                                break
+                            case "other":
+                                sendPic(result[0].file, `其他來源（未記錄）`, undefined, true);
+                                break
+                        }
+                    } else {
+                        bot.sendMessage(chatId, "不存在包含這個 TAG 的項")
                     }
                 })
             });
@@ -131,7 +163,10 @@ bot.on('message', async (msg) => {
                             sendPic(jsoninfo.file, `作品名: ${jsoninfo.name}\n作者: ${jsoninfo.author}\nTag: #${jsoninfo.taglist.join(" #")}\nPixivID: ${jsoninfo.id}\nURL: https://pixiv.net/i/${jsoninfo.id}`)
                         } catch (e) {
                             console.log(e)
-                            bot.editMessageText(`@${username} 載入圖像時發生錯誤！目標可能不存在或伺服器故障`, {
+                            if (String(e).indexOf("errmsg") != -1) bot.editMessageText(`@${username} ${e.split("errmsg:")[1]}`, {
+                                "chat_id": chatId,
+                                "message_id": mid.message_id
+                            }); else bot.editMessageText(`@${username} 載入圖像時發生錯誤！目標可能不存在或伺服器故障`, {
                                 "chat_id": chatId,
                                 "message_id": mid.message_id
                             })
@@ -165,6 +200,10 @@ bot.on('message', async (msg) => {
                                 console.log(e)
                                 err++
                                 errlist.push(Number(msgInfo[i]))
+                                if (e.indexOf("errmsg") != -1) bot.editMessageText(`@${username} ${e.split("errmsg:")[1]}`, {
+                                    "chat_id": chatId,
+                                    "message_id": mid.message_id
+                                });
                             }
                             await sleep(3000)
                         }
@@ -252,7 +291,7 @@ bot.on('message', async (msg) => {
             })
             break
         case "/start": case `/start${config.bot}`:
-            bot.sendMessage(chatId, `這是一個開源的隨機色圖Bot，支援添加Pixiv和Telegram圖片訊息內容。\n/hentai 隨機色圖\n/addpixiv 從Pixiv添加圖片\n/addphoto 從Telegram添加圖片\n/status Bot狀態\nGitHub: https://github.com/ArsFy/katonei_bot`);
+            bot.sendMessage(chatId, `這是一個開源的隨機色圖Bot，支援添加Pixiv和Telegram圖片內容。\n/hentai 隨機色圖\n/addpixiv 從Pixiv添加圖片\n/addphoto 從Telegram添加圖片\n/status Bot狀態\nGitHub: https://github.com/ArsFy/katonei_bot`);
             break
     }
 })
@@ -270,17 +309,35 @@ bot.on("callback_query", async (even) => {
             if ((time[chatId] == undefined ? 0 : time[chatId]) < (new Date() - 5000)) {
                 time[chatId] = new Date() / 1
                 try {
-                    let msginfo = await bot.sendPhoto(chatId, fs.readFileSync(`./photos/${file}`), {
-                        caption: msg,
-                        "reply_markup": {
-                            "inline_keyboard": s ? [
-                                [{ "text": "我還要！", "callback_data": "get" }]
-                            ] : []
-                        }
-                    })
-                    return msginfo.message_id
+                    if (typeof file == "string" || file.length == 1) {
+                        if (!typeof file == "string") file = file[0];
+                        let msginfo = await bot.sendPhoto(chatId, fs.readFileSync(`./photos/${file}`), {
+                            caption: msg,
+                            "reply_markup": {
+                                "inline_keyboard": s ? [
+                                    [{ "text": "我還要！", "callback_data": "get" }]
+                                ] : []
+                            }
+                        })
+                        return msginfo.message_id
+                    } else {
+                        let imagelist = [];
+                        for (let i = 0; i < file.length; i++) imagelist.push({
+                            type: 'photo',
+                            media: fs.readFileSync(`./photos/${file[i]}`),
+                            ...(i == 0 ? {
+                                caption: msg,
+                                "reply_markup": {
+                                    "inline_keyboard": s ? [
+                                        [{ "text": "我還要！", "callback_data": "get" }]
+                                    ] : []
+                                }
+                            } : {})
+                        })
+                        bot.sendMediaGroup(chatId, imagelist);
+                    }
                 } catch (err) {
-                    bot.sendMessage(chatId, "沒有這個檔案: " + file)
+                    bot.sendMessage(chatId, "讀圖片失敗，請重試")
                 }
             } else {
                 bot.sendMessage(chatId, "太快啦...等待幾秒後再試吧！")
